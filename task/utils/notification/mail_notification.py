@@ -30,7 +30,7 @@ class MailNotification(Notification):
             logger.error('没有设置通知邮箱，无法发送邮件通知')
             raise Exception('没有设置通知邮箱，无法发送邮件通知')
         message = MIMEText(content, 'html', 'utf-8')
-        message['To'] = Header(to, 'utf-8')
+        message['To'] = to
         message['From'] = Header('WebMonitor', 'utf-8')
         message['Subject'] = Header(header, 'utf-8')
 

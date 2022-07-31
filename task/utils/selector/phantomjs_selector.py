@@ -1,9 +1,12 @@
 import ast
 import warnings
 from collections import OrderedDict
+import logging
 
 from selenium import webdriver
 from task.utils.selector.selector import SelectorABC as FatherSelector
+
+logger = logging.getLogger('main')
 
 warnings.filterwarnings("ignore")
 
@@ -34,18 +37,25 @@ class PhantomJSSelector(FatherSelector):
 
         driver = webdriver.PhantomJS()
         driver.get(url)
+        driver.implicitly_wait(10)
         if self.debug:
             import os
             basepath = os.path.dirname(os.path.dirname(__file__))
-            save_path = os.path.join(basepath, '..', 'static', 'error')
+            save_path = os.path.join(basepath, '..', '..', 'static', 'error')
             os.makedirs(save_path, exist_ok=True)
             driver.save_screenshot(os.path.join(save_path, 'screenshot.png'))
+            logger.info("save_screenshot:" + save_path)
         html = driver.page_source
         driver.quit()
         return html
 
     def get_by_xpath(self, url, selector_dict, headers=None):
-        html = self.get_html(url, headers)
+        try:
+            html = self.get_html(url, headers)
+        except Exception as e:
+            import traceback
+            logger.error(traceback.format_exc())
+            raise e
 
         result = OrderedDict()
         for key, xpath_ext in selector_dict.items():
