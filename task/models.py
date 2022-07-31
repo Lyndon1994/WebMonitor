@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.core.validators import MinValueValidator, URLValidator
 from django.db import models
+from django.utils.safestring import mark_safe
 
 from setting.models import Notification
 
@@ -89,10 +90,11 @@ class TaskStatus(models.Model):
                 remove_job(task_id, 'rss')
 
     def short_last_status(self):
-        if len(str(self.last_status)) > 100:
-            return '{}......'.format(str(self.last_status)[:100])
-        else:
-            return str(self.last_status)
+        return mark_safe(self.last_status)
+        # if len(str(self.last_status)) > 100:
+        #     return '{}......'.format(str(self.last_status)[:100])
+        # else:
+        #     return str(self.last_status)
 
     short_last_status.allow_tags = True
     short_last_status.short_description = '上次运行结果'

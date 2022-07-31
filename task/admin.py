@@ -5,7 +5,7 @@ from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
 from task.models import Content, RSSTask, Task, TaskStatus
-from task.utils.scheduler import remove_job
+from task.utils.scheduler import remove_job, monitor
 
 logger = logging.getLogger('admin')
 
@@ -13,7 +13,7 @@ logger = logging.getLogger('admin')
 @admin.register(TaskStatus)
 class TaskStatusAdmin(admin.ModelAdmin):
     list_display = [
-        'task_name', 'last_run', 'short_last_status', 'task_status',
+        'task_id', 'task_name', 'last_run', 'short_last_status', 'task_status',
         'task_type'
     ]
     list_editable = ['task_status']
@@ -72,7 +72,21 @@ class TaskAdmin(ImportExportModelAdmin):
     redefine_delete_selected.icon = 'el-icon-delete'
     redefine_delete_selected.style = 'color:white;background:red'
 
-    actions = ['redefine_delete_selected']
+    def run_now_button(self, request, obj):
+        names = []
+        for o in obj.all():
+            id = o.id
+            names.append(o.name)
+            monitor(id, 'html')
+            logger.info('task_{}执行成功'.format(id))
+
+        messages.add_message(request, messages.SUCCESS, '{} 执行成功'.format(','.join(names)))
+
+    run_now_button.short_description = '立即执行'
+    run_now_button.type = 'info'
+    run_now_button.icon = 'el-icon-caret-right'
+
+    actions = ['redefine_delete_selected', 'run_now_button']
 
 
 class RSSTaskResource(resources.ModelResource):

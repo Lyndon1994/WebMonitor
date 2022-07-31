@@ -15,7 +15,7 @@ scheduler.configure(timezone='Asia/Shanghai')
 scheduler.add_jobstore(DjangoJobStore(), 'default')
 scheduler.add_job(func=ping,
                   trigger='interval',
-                  minutes=1,
+                  minutes=30,
                   id='ping',
                   replace_existing=True)
 register_events(scheduler)
