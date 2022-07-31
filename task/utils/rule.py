@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger('main')
+
 def parse_without(args, content, last_content):
     '''
     新内容中是否不包含某个字符串
@@ -42,9 +45,15 @@ def parse_increase(args, content, last_content):
 
     value = args[1]
 
-    last_content = float(last_content)
-    content = float(content)
-    value = float(value)
+    try:
+        last_content = float(last_content)
+        content = float(content)
+        value = float(value)
+    except:
+        logger.info('Cannot convert to float, So we convert to string length.')
+        last_content = len(last_content)
+        content = len(content)
+        value = float(value)
 
     if content > last_content and content - last_content > value:
         return True
@@ -65,9 +74,15 @@ def parse_decrease(args, content, last_content):
 
     value = args[1]
 
-    last_content = float(last_content)
-    content = float(content)
-    value = float(value)
+    try:
+        last_content = float(last_content)
+        content = float(content)
+        value = float(value)
+    except:
+        logger.info('Cannot convert to float, So we convert to string length.')
+        last_content = len(last_content)
+        content = len(content)
+        value = float(value)
 
     if content < last_content and last_content - content > value:
         return True
@@ -141,17 +156,19 @@ rule_funs = [
 # 1 有变化但没有触发规则(更新content 但不发送)
 # 2 有变化且触发规则(更新content 发送)
 # 3 有变化没有设置规则(更新content 发送)
+# 4 总是发送
 def is_changed(rules, content, last_content):
-    if last_content is not None and last_content == content:
+    if last_content is not None and last_content == content and rules != 'always':
         return 0
+    if rules == 'always':
+        return 4
+    if rules:
+        rules = rules.split(';')
+        for rule in rules:
+            args = rule.split(' ')
+            for rule_fun in rule_funs:
+                if rule_fun(args, content, last_content):
+                    return 2
+        return 1
     else:
-        if rules:
-            rules = rules.split(';')
-            for rule in rules:
-                args = rule.split(' ')
-                for rule_fun in rule_funs:
-                    if rule_fun(args, content, last_content):
-                        return 2
-            return 1
-        else:
-            return 3
+        return 3

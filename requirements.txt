@@ -4,7 +4,7 @@ Scrapy==1.6.0
 selenium==3.141.0
 html5lib==1.0.1
 Twisted==19.7.0
-feedparser==5.2.1
+feedparser==6.0.10
 func_timeout==4.3.0
 jsonpath==0.82
 django==2.2.13
@@ -12,3 +12,4 @@ django-simpleui==3.9.1
 django-apscheduler==0.3.0
 django-import-export==2.0.2
 slack-sdk==3.2.1
+markdownify==0.11.2

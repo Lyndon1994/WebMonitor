@@ -1,6 +1,6 @@
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import markdown
 from apscheduler.jobstores.base import JobLookupError
@@ -142,7 +142,7 @@ def monitor(id, type):
             status_code = is_changed(rule, content, last_content)
             logger.info(
                 'rule: {}, content: {}, last_content: {}, status_code: {}'.
-                format(rule, content, last_content, status_code))
+                format(rule, content[:300], last_content[:300], status_code))
             if status_code == 1:
                 status = '监测到变化，但未命中规则，最新值为{}'.format(content)
                 last.content = content
@@ -159,6 +159,11 @@ def monitor(id, type):
                 last.save()
             elif status_code == 0:
                 status = '成功执行但未监测到变化，当前值为{}'.format(content)
+            elif status_code == 4:
+                status = '总是发送消息，最新值为{}'.format(content)
+                send_message(content, name, notifications)
+                last.content = content
+                last.save()
         elif type == 'rss':
             rss_task = RSSTask.objects.get(id=id)
             url = rss_task.url
@@ -209,18 +214,67 @@ def add_job(id, interval, type='html'):
         task_id = 'rss{}'.format(id)
     try:
         scheduler.remove_job(job_id='task_{}'.format(task_id))
-    except Exception:
+        logger.info('remove job:task_{} success.'.format(task_id))
+    except Exception as e:
+        logger.error('remove job:task_{} failed. error:{}'.format(task_id, e))
         pass
-    scheduler.add_job(func=monitor,
-                      args=(
-                          id,
-                          type,
-                      ),
-                      trigger='interval',
-                      minutes=interval,
-                      id='task_{}'.format(task_id),
-                      replace_existing=True)
-    logger.info('添加定时任务task_{}'.format(task_id))
+    crons = str(interval).split()
+    if len(crons) == 1:
+        if float(crons[0]) < 0:
+            raise Exception('频率不能为负数')
+        else:
+            scheduler.add_job(func=monitor,
+                            args=(
+                                id,
+                                type,
+                            ),
+                            trigger='interval',
+                            minutes=float(crons[0]),
+                            id='task_{}'.format(task_id),
+                            replace_existing=True)
+    elif len(crons) == 2:
+        scheduler.add_job(func=monitor,
+            args=(
+                id,
+                type,
+            ),
+            trigger='date',
+            run_date=interval,
+            id='task_{}'.format(task_id),
+            replace_existing=True)
+    elif len(crons) == 5:
+        scheduler.add_job(func=monitor,
+                        args=(
+                            id,
+                            type,
+                        ),
+                        trigger='cron',
+                        minute=crons[0],
+                        hour=crons[1],
+                        day=crons[2],
+                        month=crons[3],
+                        day_of_week=crons[4],
+                        id='task_{}'.format(task_id),
+                        replace_existing=True)
+    elif len(crons) == 7:
+        scheduler.add_job(func=monitor,
+                args=(
+                    id,
+                    type,
+                ),
+                trigger='cron',
+                second=crons[0],
+                minute=crons[1],
+                hour=crons[2],
+                day=crons[3],
+                month=crons[4],
+                day_of_week=crons[5],
+                year=crons[6],
+                id='task_{}'.format(task_id),
+                replace_existing=True)
+    else:
+        raise Exception('crontab格式错误')
+    logger.info('添加定时任务task_{}: {}'.format(task_id, scheduler.get_job('task_{}'.format(task_id))))
 
 
 def remove_job(id, type='html'):

@@ -128,10 +128,11 @@ class Task(models.Model):
                                     default='no',
                                     verbose_name='是否使用无头浏览器',
                                     choices=is_chrome_choices)
-    frequency = models.FloatField(null=False,
-                                  default=5,
-                                  verbose_name='频率(分钟)',
-                                  validators=[MinValueValidator(0)])
+    frequency = models.CharField(null=False,
+                                max_length=100,
+                                default=5,
+                                verbose_name='频率(分钟)',
+                                help_text='纯数字表示分钟，也支持5/7位crontab表达式，或者具体日期形似2019-11-31 16:30:01')
     create_time = models.DateTimeField(null=False,
                                        auto_now_add=True,
                                        verbose_name='创建时间')
