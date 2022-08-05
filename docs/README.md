@@ -17,5 +17,5 @@
 * 监控RSS更新
 * 数据导入导出
 
-## Buy Me a Coffee
-![](fig/donate_wechat.jpg)
+## env
+python 3.6
